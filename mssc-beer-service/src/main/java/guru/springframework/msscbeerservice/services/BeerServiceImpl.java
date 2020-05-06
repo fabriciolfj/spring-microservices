@@ -8,6 +8,8 @@ import guru.springframework.msscbeerservice.web.model.BeerDto;
 import guru.springframework.msscbeerservice.web.model.BeerPagedList;
 import guru.springframework.msscbeerservice.web.model.BeerStyleEnum;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 /**
  * Created by jt on 2019-06-06.
  */
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BeerServiceImpl implements BeerService {
@@ -26,10 +29,11 @@ public class BeerServiceImpl implements BeerService {
     private final BeerMapper beerMapper;
 
     @Override
-    public BeerDto getById(UUID beerId) {
-        return beerMapper.beerToBeerDto(
-                beerRepository.findById(beerId).orElseThrow(NotFoundException::new)
-        );
+    @Cacheable(cacheNames = "beerCache", key = "#beerId", condition = "#showInventoryOnHand == false ")
+    public BeerDto getById(UUID beerId, Boolean showInventoryOnHand) {
+        log.info("Iniciando a busca de uma cerveja");
+        var beer = beerRepository.findById(beerId).orElseThrow(NotFoundException::new);
+        return showInventoryOnHand? beerMapper.beerToBeerDtoWithInventory(beer) : beerMapper.beerToBeerDto(beer);
     }
 
     @Override
@@ -50,34 +54,47 @@ public class BeerServiceImpl implements BeerService {
     }
 
     @Override
-    public BeerPagedList listBeers(String beerName, BeerStyleEnum beerStyle, PageRequest pageRequest) {
+    @Cacheable(cacheNames = "beerListCache", condition = "#showInventoryOnHand == false ")
+    public BeerPagedList listBeers(String beerName, BeerStyleEnum beerStyle, PageRequest pageRequest, Boolean showInventoryOnHand) {
+        log.info("Iniciando processo de listagem das cervejas.");
         BeerPagedList beerPagedList;
         Page<Beer> beerPage = null;
 
         if(!StringUtils.isEmpty(beerName) && !StringUtils.isEmpty(beerStyle)) {
             beerPage = beerRepository.findAllByBeerNameAndBeerStyle(beerName, beerStyle, pageRequest);
-            return createBeerPagedList(beerPage);
+            return createBeerPagedList(beerPage, showInventoryOnHand);
         }
 
         if(!StringUtils.isEmpty(beerName) && StringUtils.isEmpty(beerStyle)){
             beerPage = beerRepository.findAllByBeerName(beerName, pageRequest);
-            return createBeerPagedList(beerPage);
+            return createBeerPagedList(beerPage, showInventoryOnHand);
         }
 
         if(StringUtils.isEmpty(beerName) && !StringUtils.isEmpty(beerStyle)) {
             beerPage = beerRepository.findAllByBeerStyle(beerStyle, pageRequest);
-            return createBeerPagedList(beerPage);
+            return createBeerPagedList(beerPage, showInventoryOnHand);
         }
 
-        return createBeerPagedList(beerRepository.findAll(pageRequest));
-
+        return createBeerPagedList(beerRepository.findAll(pageRequest), showInventoryOnHand);
     }
 
-    private BeerPagedList createBeerPagedList(Page<Beer> beerPage) {
+    @Cacheable(cacheNames = "beerUpcCache", key = "#upc")
+    @Override
+    public BeerDto getByUpc(String upc) {
+        return beerMapper.beerToBeerDto(beerRepository.findByUpc(upc));
+    }
+
+    private BeerPagedList createBeerPagedList(Page<Beer> beerPage, Boolean showBeerInventory) {
         return new BeerPagedList(
                 beerPage.getContent()
                 .stream()
-                .map(beerMapper::beerToBeerDto)
+                .map(beer -> {
+                    if(showBeerInventory) {
+                        return beerMapper.beerToBeerDtoWithInventory(beer);
+                    }
+
+                    return beerMapper.beerToBeerDto(beer);
+                })
                 .collect(Collectors.toList()),
                 PageRequest.of(beerPage.getPageable().getPageNumber(), beerPage.getPageable().getPageSize()),
                 beerPage.getTotalElements());

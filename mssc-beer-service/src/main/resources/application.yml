@@ -5,5 +5,8 @@ sfg.brewery.beer-inventory-service-host: http://localhost:8082
 
 
 spring:
+  cache:
+    jcache:
+      config: classpath:ehcache.xml
   datasource:
     initialization-mode: EMBEDDED
