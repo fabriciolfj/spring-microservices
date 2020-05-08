@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    username: root
+    password: root
+    url: jdbc:mysql://127.0.0.1:3306/beerservice?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+  jpa:
+    database: mysql
+    hibernate:
+      ddl-auto: update
+    properties:
+      dialect: org.hibernate.dialect.MySQL8Dialect

@@ -18,11 +18,4 @@ public class BeerInventoryServiceRestTemplateImplTest {
     void setUp() {
 
     }
-
-    @Test
-    void getOnhandInventory() {
-        var qoh = beerInventoryService.getOnhandInventory(BeerLoader.BEER_1_UUID);
-
-        System.out.println(qoh);
-    }
 }

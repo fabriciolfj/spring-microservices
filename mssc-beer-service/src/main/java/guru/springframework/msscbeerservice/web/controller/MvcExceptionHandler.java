@@ -13,7 +13,7 @@ import java.util.List;
  * Created by jt on 2019-05-25.
  */
 @ControllerAdvice
-public class MvcExceptionHandler {
+public class  MvcExceptionHandler {
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<List> validationErrorHandler(ConstraintViolationException ex){

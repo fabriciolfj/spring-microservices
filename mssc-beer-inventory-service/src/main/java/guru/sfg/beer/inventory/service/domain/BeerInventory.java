@@ -35,7 +35,7 @@ import java.util.UUID;
 public class BeerInventory extends BaseEntity{
 
     @Builder
-    public BeerInventory(UUID id, Long version, Timestamp createdDate, Timestamp lastModifiedDate, UUID beerId,
+    public BeerInventory(UUID id, Long version, Timestamp createdDate, Timestamp lastModifiedDate, String beerId,
                          String upc, Integer quantityOnHand) {
         super(id, version, createdDate, lastModifiedDate);
         this.beerId = beerId;
@@ -43,7 +43,7 @@ public class BeerInventory extends BaseEntity{
         this.quantityOnHand = quantityOnHand;
     }
 
-    private UUID beerId;
+    private String beerId;
     private String upc;
     private Integer quantityOnHand = 0;
 }

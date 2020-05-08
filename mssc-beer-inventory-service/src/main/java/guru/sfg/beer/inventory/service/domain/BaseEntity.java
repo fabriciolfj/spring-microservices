@@ -32,10 +32,12 @@ import java.util.UUID;
  * Created by jt on 2019-01-26.
  */
 
+@Table(name = "beer_inventory")
+@Entity
 @Setter
 @Getter
 @NoArgsConstructor
-@MappedSuperclass
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 public class BaseEntity {
 
     public BaseEntity(UUID id, Long version, Timestamp createdDate, Timestamp lastModifiedDate) {
@@ -52,7 +54,7 @@ public class BaseEntity {
             strategy = "org.hibernate.id.UUIDGenerator"
     )
     @Type(type="org.hibernate.type.UUIDCharType")
-    @Column(length = 36, columnDefinition = "varchar", updatable = false, nullable = false )
+    @Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false )
     private UUID id;
 
     @Version
